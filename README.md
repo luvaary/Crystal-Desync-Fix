@@ -4,7 +4,7 @@
 [![Release](https://img.shields.io/github/v/release/luvaary/Crystal-Desync-Fix?display_name=tag&sort=semver)](https://github.com/luvaary/Crystal-Desync-Fix/releases)
 [![Downloads](https://img.shields.io/github/downloads/luvaary/Crystal-Desync-Fix/total)](https://github.com/luvaary/Crystal-Desync-Fix/releases)
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.11-2ea043)](https://www.minecraft.net/)
-[![Fabric Loader](https://img.shields.io/badge/Fabric%20Loader-0.18.6-f6c915)](https://fabricmc.net/)
+[![Fabric Loader](https://img.shields.io/badge/Fabric%20Loader-0.18.4%2B-f6c915)](https://fabricmc.net/)
 
 ![CPVP Desync Fix End Crystal Logo](docs/logo.svg)
 
@@ -48,7 +48,7 @@ CPVP Desync Fix is a client-side Fabric mod for Minecraft 1.21.11 focused on cry
 
 - Minecraft: 1.21.11
 - Java: 21
-- Fabric Loader: 0.18.6+
+- Fabric Loader: 0.18.4+
 - Fabric API: 0.141.3+1.21.11
 
 ## Quick Start
