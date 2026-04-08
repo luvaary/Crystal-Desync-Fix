@@ -1,5 +1,5 @@
 {
-  "required": true,
+  "required": false,
   "minVersion": "0.8",
   "package": "com.cpvpdesyncfix.mixin",
   "compatibilityLevel": "JAVA_21",
@@ -11,6 +11,6 @@
     "EntityInterpolationMixin"
   ],
   "injectors": {
-    "defaultRequire": 1
+    "defaultRequire": 0
   }
 }

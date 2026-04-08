@@ -74,7 +74,7 @@ public final class CPVPDesyncFix implements ClientModInitializer {
                     );
                 }
             }
-        } catch (Exception exception) {
+        } catch (Throwable exception) {
             logFeatureFailure("onClientTick", exception);
         }
     }
@@ -85,7 +85,7 @@ public final class CPVPDesyncFix implements ClientModInitializer {
         }
         try {
             CRYSTAL_SYNC_MANAGER.scanWorld(world, config);
-        } catch (Exception exception) {
+        } catch (Throwable exception) {
             logFeatureFailure("onClientWorldEntityTick", exception);
         }
     }
@@ -103,7 +103,7 @@ public final class CPVPDesyncFix implements ClientModInitializer {
             if (target instanceof EndCrystalEntity endCrystalEntity) {
                 CRYSTAL_SYNC_MANAGER.predictLocalBreak(endCrystalEntity, config);
             }
-        } catch (Exception exception) {
+        } catch (Throwable exception) {
             logFeatureFailure("onLocalAttack", exception);
         }
     }
@@ -114,7 +114,7 @@ public final class CPVPDesyncFix implements ClientModInitializer {
                 return true;
             }
             return CRYSTAL_SYNC_MANAGER.shouldRender(crystal, config);
-        } catch (Exception exception) {
+        } catch (Throwable exception) {
             logFeatureFailure("shouldRenderCrystal", exception);
             return true;
         }
@@ -123,7 +123,7 @@ public final class CPVPDesyncFix implements ClientModInitializer {
     public static int adjustInterpolationSteps(Entity entity, int interpolationSteps, double x, double y, double z) {
         try {
             return INTERPOLATION_SMOOTHER.adjustInterpolationSteps(entity, interpolationSteps, x, y, z, config);
-        } catch (Exception exception) {
+        } catch (Throwable exception) {
             logFeatureFailure("adjustInterpolationSteps", exception);
             return interpolationSteps;
         }
@@ -133,7 +133,7 @@ public final class CPVPDesyncFix implements ClientModInitializer {
         return LOGGER;
     }
 
-    private static void logFeatureFailure(String area, Exception exception) {
+    private static void logFeatureFailure(String area, Throwable exception) {
         long now = System.currentTimeMillis();
         if (now - lastErrorLogMs < ERROR_LOG_COOLDOWN_MS) {
             return;
