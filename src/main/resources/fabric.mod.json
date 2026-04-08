@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "cpvpdesyncfix",
+  "version": "${version}",
+  "name": "CPVP Desync Fix",
+  "description": "Client-side Crystal PvP visual desync cleanup and interpolation smoothing for Fabric 1.21.11.",
+  "authors": [
+    "Falthera"
+  ],
+  "contact": {},
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.cpvpdesyncfix.CPVPDesyncFix"
+    ]
+  },
+  "mixins": [
+    "cpvpdesyncfix.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.18.6",
+    "minecraft": ">=1.21.11 <1.22",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}

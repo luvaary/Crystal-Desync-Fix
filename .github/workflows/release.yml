@@ -1,0 +1,142 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: Release tag in format v<mod_version>-mc<mc_version>
+        required: true
+        type: string
+
+env:
+  TARGET_MC_VERSION: 1.21.11
+
+jobs:
+  release:
+    name: Build and Publish Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.10.2
+
+      - name: Resolve build metadata and dependency versions
+        id: resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          MC="${TARGET_MC_VERSION}"
+
+          YARN=$(curl -fsSL "https://meta.fabricmc.net/v2/versions/yarn/${MC}" | jq -r 'map(select(.stable == true) | .version) | .[0]')
+          if [[ -z "${YARN}" || "${YARN}" == "null" ]]; then
+            YARN=$(curl -fsSL "https://meta.fabricmc.net/v2/versions/yarn/${MC}" | jq -r '.[0].version')
+          fi
+          if [[ -z "${YARN}" || "${YARN}" == "null" ]]; then
+            echo "Failed to resolve Yarn mappings for Minecraft ${MC}." >&2
+            exit 1
+          fi
+
+          FABRIC_API=$(curl -fsSL "https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/maven-metadata.xml" \
+            | tr -d '\r' \
+            | grep -oE '<version>[^<]+</version>' \
+            | sed -E 's#</?version>##g' \
+            | grep -E "\\+${MC}$" \
+            | sort -V \
+            | tail -n1)
+          if [[ -z "${FABRIC_API}" ]]; then
+            echo "Failed to resolve Fabric API for Minecraft ${MC}." >&2
+            exit 1
+          fi
+
+          MOD_VERSION=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2)
+          ARCHIVES_BASE=$(grep '^archives_base_name=' gradle.properties | cut -d'=' -f2)
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG_NAME="${{ inputs.tag_name }}"
+          else
+            TAG_NAME="${GITHUB_REF_NAME}"
+          fi
+
+          EXPECTED_TAG="v${MOD_VERSION}-mc${MC}"
+          if [[ "${TAG_NAME}" != "${EXPECTED_TAG}" ]]; then
+            echo "Tag mismatch. Expected ${EXPECTED_TAG} but got ${TAG_NAME}." >&2
+            exit 1
+          fi
+
+          RELEASE_NAME="CPVP Desync Fix v${MOD_VERSION} for Fabric MC ${MC}"
+          ARTIFACT_NAME="${ARCHIVES_BASE}-v${MOD_VERSION}-mc${MC}+build.${GITHUB_RUN_NUMBER}.jar"
+
+          echo "minecraft=${MC}" >> "${GITHUB_OUTPUT}"
+          echo "yarn=${YARN}" >> "${GITHUB_OUTPUT}"
+          echo "fabric_api=${FABRIC_API}" >> "${GITHUB_OUTPUT}"
+          echo "mod_version=${MOD_VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "archives_base=${ARCHIVES_BASE}" >> "${GITHUB_OUTPUT}"
+          echo "tag_name=${TAG_NAME}" >> "${GITHUB_OUTPUT}"
+          echo "release_name=${RELEASE_NAME}" >> "${GITHUB_OUTPUT}"
+          echo "artifact_name=${ARTIFACT_NAME}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build release jar
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon clean build \
+            -Pminecraft_version="${{ steps.resolve.outputs.minecraft }}" \
+            -Pyarn_mappings="${{ steps.resolve.outputs.yarn }}" \
+            -Pfabric_version="${{ steps.resolve.outputs.fabric_api }}"
+
+      - name: Package release artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p dist
+          JAR=$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*sources*' | head -n1)
+          if [[ -z "${JAR}" ]]; then
+            echo "No built mod jar found in build/libs." >&2
+            exit 1
+          fi
+
+          cp "${JAR}" "dist/${{ steps.resolve.outputs.artifact_name }}"
+          sha256sum "dist/${{ steps.resolve.outputs.artifact_name }}" > "dist/${{ steps.resolve.outputs.artifact_name }}.sha256"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.resolve.outputs.tag_name }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ steps.resolve.outputs.release_name }}
+          files: |
+            dist/${{ steps.resolve.outputs.artifact_name }}
+            dist/${{ steps.resolve.outputs.artifact_name }}.sha256
+          generate_release_notes: true
+          body: |
+            Automated CI release for CPVP Desync Fix.
+
+            Naming scheme:
+            - Tag: v<mod_version>-mc<mc_version>
+            - Release name: CPVP Desync Fix v<mod_version> for Fabric MC <mc_version>
+            - Artifact: <archives_base_name>-v<mod_version>-mc<mc_version>+build.<run_number>.jar

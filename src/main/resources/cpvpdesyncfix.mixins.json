@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.cpvpdesyncfix.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "MinecraftClientTickMixin",
+    "ClientWorldEntityTrackingMixin",
+    "MinecraftClientAttackMixin",
+    "EndCrystalRendererMixin",
+    "EntityInterpolationMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

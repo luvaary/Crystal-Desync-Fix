@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+env:
+  TARGET_MC_VERSION: 1.21.11
+
+jobs:
+  build:
+    name: Build Fabric Mod
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.10.2
+
+      - name: Resolve Fabric dependencies for target Minecraft version
+        id: resolve
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          MC="${TARGET_MC_VERSION}"
+
+          YARN=$(curl -fsSL "https://meta.fabricmc.net/v2/versions/yarn/${MC}" | jq -r 'map(select(.stable == true) | .version) | .[0]')
+          if [[ -z "${YARN}" || "${YARN}" == "null" ]]; then
+            YARN=$(curl -fsSL "https://meta.fabricmc.net/v2/versions/yarn/${MC}" | jq -r '.[0].version')
+          fi
+          if [[ -z "${YARN}" || "${YARN}" == "null" ]]; then
+            echo "Failed to resolve Yarn mappings for Minecraft ${MC}." >&2
+            exit 1
+          fi
+
+          FABRIC_API=$(curl -fsSL "https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/maven-metadata.xml" \
+            | tr -d '\r' \
+            | grep -oE '<version>[^<]+</version>' \
+            | sed -E 's#</?version>##g' \
+            | grep -E "\\+${MC}$" \
+            | sort -V \
+            | tail -n1)
+          if [[ -z "${FABRIC_API}" ]]; then
+            echo "Failed to resolve Fabric API for Minecraft ${MC}." >&2
+            exit 1
+          fi
+
+          MOD_VERSION=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2)
+          ARCHIVES_BASE=$(grep '^archives_base_name=' gradle.properties | cut -d'=' -f2)
+
+          echo "minecraft=${MC}" >> "${GITHUB_OUTPUT}"
+          echo "yarn=${YARN}" >> "${GITHUB_OUTPUT}"
+          echo "fabric_api=${FABRIC_API}" >> "${GITHUB_OUTPUT}"
+          echo "mod_version=${MOD_VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "archives_base=${ARCHIVES_BASE}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --no-daemon clean build \
+            -Pminecraft_version="${{ steps.resolve.outputs.minecraft }}" \
+            -Pyarn_mappings="${{ steps.resolve.outputs.yarn }}" \
+            -Pfabric_version="${{ steps.resolve.outputs.fabric_api }}"
+
+      - name: Package CI artifact
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p dist
+          JAR=$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*sources*' | head -n1)
+          if [[ -z "${JAR}" ]]; then
+            echo "No built mod jar found in build/libs." >&2
+            exit 1
+          fi
+
+          NAME="${{ steps.resolve.outputs.archives_base }}-ci-v${{ steps.resolve.outputs.mod_version }}-mc${{ steps.resolve.outputs.minecraft }}+run.${GITHUB_RUN_NUMBER}.jar"
+          cp "${JAR}" "dist/${NAME}"
+
+          echo "artifact_name=${NAME}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload CI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-mod-jar
+          path: dist/${{ steps.package.outputs.artifact_name }}
+          if-no-files-found: error

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" role="img" aria-labelledby="title desc">
+  <title id="title">CPVP Desync Fix Logo</title>
+  <desc id="desc">Crystal styled logo with jar release branding.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#091225"/>
+      <stop offset="100%" stop-color="#12324f"/>
+    </linearGradient>
+    <linearGradient id="crystal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9ef4ff"/>
+      <stop offset="100%" stop-color="#33b7d4"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#36f1cd"/>
+      <stop offset="100%" stop-color="#42c7ff"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="360" rx="28" fill="url(#bg)"/>
+
+  <g transform="translate(74,62)" filter="url(#glow)">
+    <polygon points="120,0 188,94 120,236 52,94" fill="url(#crystal)" opacity="0.95"/>
+    <polygon points="120,0 120,236 188,94" fill="#b7fbff" opacity="0.35"/>
+    <polygon points="120,0 120,236 52,94" fill="#5fd8ef" opacity="0.45"/>
+    <rect x="98" y="236" width="44" height="26" rx="8" fill="#66f2d5"/>
+    <rect x="82" y="262" width="76" height="16" rx="8" fill="#1dd3ad"/>
+  </g>
+
+  <g transform="translate(280,92)">
+    <text x="0" y="68" font-size="62" font-family="Segoe UI, Arial, sans-serif" font-weight="700" fill="#ffffff">CPVP Desync Fix</text>
+    <rect x="0" y="94" width="410" height="54" rx="12" fill="url(#accent)"/>
+    <text x="20" y="130" font-size="32" font-family="Consolas, Courier New, monospace" font-weight="700" fill="#04253b">cpvp-desync-fix.jar</text>
+    <text x="0" y="188" font-size="22" font-family="Segoe UI, Arial, sans-serif" fill="#a9d8f4">Fabric 1.21.11 • Competitive Ready Build</text>
+  </g>
+</svg>
