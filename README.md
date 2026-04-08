@@ -1,89 +1,104 @@
 # CPVP Desync Fix
 
-Author: Falthera (also known as luvaary)
+[![CI](https://github.com/luvaary/Crystal-Desync-Fix/actions/workflows/ci.yml/badge.svg)](https://github.com/luvaary/Crystal-Desync-Fix/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/luvaary/Crystal-Desync-Fix?display_name=tag&sort=semver)](https://github.com/luvaary/Crystal-Desync-Fix/releases)
+[![Downloads](https://img.shields.io/github/downloads/luvaary/Crystal-Desync-Fix/total)](https://github.com/luvaary/Crystal-Desync-Fix/releases)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.11-2ea043)](https://www.minecraft.net/)
+[![Fabric Loader](https://img.shields.io/badge/Fabric%20Loader-0.18.6-f6c915)](https://fabricmc.net/)
 
-CPVP Desync Fix is a client-side Fabric mod for Minecraft 1.21.11 that improves Crystal PvP visual consistency under network delay without changing server truth or automating combat.
+![CPVP Desync Fix End Crystal Logo](docs/logo.svg)
 
-This build runs fully in the background with no HUD and no keybind toggles.
+Author: Falthera (luvaary)
 
-Logo: docs/logo.svg
+CPVP Desync Fix is a client-side Fabric mod for Minecraft 1.21.11 focused on crystal combat visual consistency. It improves responsiveness and smoothness under real network jitter without changing server authority or automating combat.
 
-## Safety and scope
+## Why This Mod
 
-This mod is intentionally limited to quality-of-life rendering and client feedback:
+- Cleans up stale crystal rendering after fast place and break exchanges.
+- Reduces movement jitter and visual snapback for relevant entities.
+- Runs fully in the background with no HUD noise and no hotkeys required.
+- Stays within fair-play constraints suitable for competitive environments.
 
-- No packet spoofing
-- No fake hitbox manipulation
-- No combat automation
-- No reach, speed, rotation, aim, or hitbox cheats
-- No server-side logic
+## Safety Scope
 
-## Features
+- No packet spoofing.
+- No fake hitbox manipulation.
+- No combat automation.
+- No reach, speed, rotation, or aim cheats.
+- No server-side logic.
+
+## Core Features
 
 1. Crystal visual desync cleanup
-- Tracks crystal presence client-side.
-- Predictively hides crystals immediately after local break input for a short timeout.
-- Reconciles with server updates and logs desync-like events (rapid flicker/timeouts).
+- Tracks crystal lifecycle state client-side.
+- Predictively suppresses short-lived ghost visuals after local break input.
+- Reconciles predictions against server-confirmed removal and timeout paths.
 
 2. Entity interpolation smoothing
-- Adjusts tracked interpolation steps for relevant entities (players, crystals, TNT).
-- Reduces harsh visual snapback from delayed movement packets.
-- Keeps server authority unchanged.
+- Adjusts interpolation budget for relevant entities only.
+- Adapts to live ping jitter and motion jitter signals.
+- Preserves server truth while improving render continuity.
 
-3. Advanced background adaptation
-- No UI overlay and no hotkeys.
-- Uses crystal instability plus ping/motion jitter as real-time signals.
-- Dynamically adjusts interpolation budgets during packet bursts.
+3. Competitive stability hardening
+- Runtime fail-safe guards prevent one feature exception from crashing client tick.
+- Config sanitization clamps unstable values on load and save.
+- Internal state maps are capacity-limited for long-session stability.
 
-4. Config
-- JSON config file in the Fabric config folder.
-- Feature toggles for cleanup and interpolation with safe tuning parameters.
-- No runtime keybind inputs.
-- Includes config sanitization and competitive-safe clamping to avoid unstable values.
+## Requirements
 
-## Setup
+- Minecraft: 1.21.11
+- Java: 21
+- Fabric Loader: 0.18.6+
+- Fabric API: 0.141.3+1.21.11
+
+## Quick Start
 
 1. Open the project in IntelliJ.
-2. Ensure JDK 21 is selected.
+2. Select JDK 21.
 3. Run:
 
-   - gradlew genSources
-   - gradlew runClient
+```bash
+./gradlew genSources
+./gradlew runClient
+```
 
-This repository already includes a pinned Gradle wrapper for reproducible builds.
+Windows:
 
-## Config file
+```powershell
+./gradlew.bat genSources
+./gradlew.bat runClient
+```
 
-Generated at:
+## Configuration
+
+Config path:
 
 - config/cpvp-desync-fix.json
 
-All major features are enabled by default except the adaptive interpolation experiment.
+Defaults are tuned for competitive stability, with adaptive interpolation experimental mode disabled by default.
 
-## GitHub Actions CI and Release
+## CI and Release Channels
 
-This repository includes two workflows:
+### Auto Release From CI
 
-- CI build workflow: .github/workflows/ci.yml
-- Release workflow: .github/workflows/release.yml
+CI now auto-publishes a GitHub prerelease on successful pushes to main and master.
 
-Both workflows compile against Fabric for Minecraft 1.21.11.
+Auto release naming:
 
-Release naming scheme:
+- Tag: auto-v<mod_version>-mc<mc_version>-run.<run_number>.<run_attempt>
+- Artifact: <archives_base_name>-ci-v<mod_version>-mc<mc_version>+run.<run_number>.jar
+
+### Stable Tagged Release
+
+The stable release workflow remains available for versioned releases.
+
+Stable release naming:
 
 - Tag: v<mod_version>-mc<mc_version>
 - Release name: CPVP Desync Fix v<mod_version> for Fabric MC <mc_version>
 - Artifact: <archives_base_name>-v<mod_version>-mc<mc_version>+build.<run_number>.jar
 
-Example tag for the current config:
+## Workflows
 
-- v1.0.0-mc1.21.11
-
-When you push a matching tag, the release workflow builds the mod, creates a checksum file, and publishes a GitHub Release automatically.
-
-## Competitive readiness hardening
-
-- Runtime fail-safe guards prevent one-off feature exceptions from crashing the client.
-- Config values are sanitized and clamped on load.
-- Competitive preset mode enforces stable lower/upper bounds for key smoothing timings.
-- Internal state maps are capacity-limited to protect long-session memory stability.
+- CI: .github/workflows/ci.yml
+- Stable release: .github/workflows/release.yml
