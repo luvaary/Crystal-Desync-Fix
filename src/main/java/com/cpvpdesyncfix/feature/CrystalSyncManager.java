@@ -38,7 +38,7 @@ public final class CrystalSyncManager {
         worldTickIndex++;
         visibleIdsScratch.clear();
 
-        for (Entity entity : world.iterateEntities()) {
+        for (Entity entity : world.getEntities()) {
             if (!(entity instanceof EndCrystalEntity crystal)) {
                 continue;
             }
