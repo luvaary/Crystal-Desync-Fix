@@ -9,6 +9,7 @@
   ],
   "contact": {},
   "license": "MIT",
+  "icon": "assets/cpvpdesyncfix/icon.png",
   "environment": "client",
   "entrypoints": {
     "client": [
