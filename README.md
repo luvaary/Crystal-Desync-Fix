@@ -1,6 +1,6 @@
 # CPVP Desync Fix
 
-Author: Falthera
+Author: Falthera (also known as luvaary)
 
 CPVP Desync Fix is a client-side Fabric mod for Minecraft 1.21.11 that improves Crystal PvP visual consistency under network delay without changing server truth or automating combat.
 
