@@ -17,7 +17,7 @@ jobs:
     name: Build Fabric Mod
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
 
     steps:
       - name: Checkout
@@ -112,3 +112,47 @@ jobs:
           name: ci-mod-jar
           path: dist/${{ steps.package.outputs.artifact_name }}
           if-no-files-found: error
+
+      - name: Prepare auto release assets
+        id: auto_assets
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          CHECKSUM_NAME="${{ steps.package.outputs.artifact_name }}.sha256"
+          sha256sum "dist/${{ steps.package.outputs.artifact_name }}" > "dist/${CHECKSUM_NAME}"
+
+          echo "checksum_name=${CHECKSUM_NAME}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build auto release metadata
+        id: auto_release
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG_NAME="auto-v${{ steps.resolve.outputs.mod_version }}-mc${{ steps.resolve.outputs.minecraft }}-run.${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}"
+          RELEASE_NAME="Auto Release v${{ steps.resolve.outputs.mod_version }} for MC ${{ steps.resolve.outputs.minecraft }} (run ${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT})"
+
+          echo "tag_name=${TAG_NAME}" >> "${GITHUB_OUTPUT}"
+          echo "release_name=${RELEASE_NAME}" >> "${GITHUB_OUTPUT}"
+
+      - name: Publish auto release
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.auto_release.outputs.tag_name }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ steps.auto_release.outputs.release_name }}
+          prerelease: true
+          generate_release_notes: true
+          files: |
+            dist/${{ steps.package.outputs.artifact_name }}
+            dist/${{ steps.auto_assets.outputs.checksum_name }}
+          body: |
+            Automated CI release for CPVP Desync Fix.
+
+            Auto release naming scheme:
+            - Tag: auto-v<mod_version>-mc<mc_version>-run.<run_number>.<run_attempt>
+            - Artifact: <archives_base_name>-ci-v<mod_version>-mc<mc_version>+run.<run_number>.jar
