@@ -9,6 +9,7 @@ on:
   workflow_dispatch:
 
 env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   TARGET_MC_VERSION: 1.21.11
 
 jobs:
